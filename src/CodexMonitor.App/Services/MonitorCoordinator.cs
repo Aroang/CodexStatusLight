@@ -15,10 +15,12 @@ public sealed class MonitorCoordinator : IAsyncDisposable
     private AppServerClient? _client;
     private Task? _pollTask;
     private readonly string? _runtimeDescriptorPath;
+    private readonly Uri? _externalEndpoint;
 
-    public MonitorCoordinator(string? runtimeDescriptorPath = null)
+    public MonitorCoordinator(string? runtimeDescriptorPath = null, Uri? externalEndpoint = null)
     {
         _runtimeDescriptorPath = runtimeDescriptorPath;
+        _externalEndpoint = externalEndpoint;
         _reducer.Changed += (_, snapshot) => SnapshotChanged?.Invoke(this, snapshot);
     }
 
@@ -28,8 +30,13 @@ public sealed class MonitorCoordinator : IAsyncDisposable
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await _host.StartAsync(cancellationToken).ConfigureAwait(false);
-        var endpoint = _host.Endpoint ?? throw new InvalidOperationException("App Server 未提供监听地址。");
+        if (_externalEndpoint is null)
+        {
+            await _host.StartAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var endpoint = _externalEndpoint ?? _host.Endpoint
+            ?? throw new InvalidOperationException("App Server 未提供监听地址。");
         _client = await ConnectWithRetryAsync(endpoint, cancellationToken).ConfigureAwait(false);
         _client.Notification += (_, notification) => _reducer.ApplyNotification(notification);
 

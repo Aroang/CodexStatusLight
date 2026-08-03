@@ -1,6 +1,6 @@
 # Codex Monitor
 
-Codex Monitor 是一个在 Windows 本地运行的 Codex CLI 状态灯。使用它启动 Codex 后，桌面上会出现一个始终置顶的红、黄、绿三色悬浮窗，用于提示 Agent 正在工作、等待输入、已经完成或发生错误。
+Codex Monitor 是一个支持 Windows 和 WSL 的 Codex CLI 状态灯。使用它启动 Codex 后，Windows 桌面上会出现一个始终置顶的红、黄、绿三色悬浮窗，用于提示 Agent 正在工作、等待输入、已经完成或发生错误。
 
 程序通过 Codex App Server 的结构化协议读取状态，不解析终端文字、不读取 Codex SQLite，也不记录提示词或回复内容。Codex 原有的 TUI、键盘输入和终端输出都会保留。
 
@@ -29,6 +29,12 @@ Codex Monitor 是一个在 Windows 本地运行的 Codex CLI 状态灯。使用�
 - Windows 10/11 x64
 - 已安装 Codex CLI，并且能在 PowerShell 中正常执行 `codex`
 - 从源码构建时需要 .NET 8 SDK；仓库的 `global.json` 当前指定 `8.0.423`
+
+在 WSL 中使用时还需要：
+
+- WSL 2，并启用 Windows 程序互操作和默认的 `localhostForwarding`
+- WSL 内安装 Codex CLI 和 .NET 8 SDK
+- Windows PowerShell 可从 WSL 通过 `powershell.exe` 调用
 
 可先检查环境：
 
@@ -137,6 +143,43 @@ codex -C D:\path\to\repo
 ```
 
 指定目录中必须已经包含 `CodexMonitor.exe`、`codex-watch.exe` 和 `codex.cmd`。
+
+## 在 WSL 中使用
+
+WSL 版本会在 WSL 内运行 Codex CLI 和 App Server，仅把悬浮窗放在 Windows 侧显示。因此 Codex 使用的是 WSL 的工作目录、Shell、工具和环境变量。
+
+先在 WSL 中确认依赖：
+
+```bash
+codex --version
+dotnet --version
+powershell.exe -NoProfile -Command '$PSVersionTable.PSVersion'
+```
+
+然后在仓库根目录发布并安装：
+
+```bash
+bash scripts/publish-wsl.sh
+bash scripts/install-wsl.sh
+```
+
+确保 `~/.local/bin` 已在 `PATH` 中，之后可直接使用：
+
+```bash
+codex-watch
+codex-watch "检查项目并运行测试"
+codex-watch -C /home/me/project "修复测试失败"
+```
+
+如需保留输入 `codex` 的习惯，可在 WSL 的 Shell 配置中加入别名：
+
+```bash
+alias codex=codex-watch
+```
+
+启动器会自动找到 WSL `PATH` 中原始的 `codex` 可执行文件。也可用 Linux 路径显式设置 `CODEX_CLI_PATH`。`CodexMonitor.exe` 默认与 `codex-watch` 放在同一目录；若分开放置，`CODEX_MONITOR_APP` 在 WSL 中应设置为该 exe 的 `/mnt/...` 路径。
+
+每个 WSL 会话会建立一个只监听 `127.0.0.1` 的 App Server。WSL 启动器退出时，会结束 App Server，并通过共享生命周期文件通知 Windows 悬浮窗退出。
 
 ## 悬浮窗和托盘操作
 

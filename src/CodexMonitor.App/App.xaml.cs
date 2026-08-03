@@ -32,7 +32,7 @@ public partial class App : System.Windows.Application
 
         var settingsStore = new AppSettingsStore();
         var viewModel = new MainViewModel();
-        _coordinator = new MonitorCoordinator(options.RuntimeFile);
+        _coordinator = new MonitorCoordinator(options.RuntimeFile, options.ExternalEndpoint);
         _coordinator.SnapshotChanged += (_, snapshot) => Dispatcher.BeginInvoke(() => viewModel.Apply(snapshot));
 
         _window = new MainWindow(viewModel, settingsStore, options.WindowOffset);
@@ -42,6 +42,33 @@ public partial class App : System.Windows.Application
         if (options.ParentProcessId is { } parentProcessId)
         {
             _ = ExitWhenParentStopsAsync(parentProcessId);
+        }
+        else if (options.LifetimeFile is { } lifetimeFile)
+        {
+            _ = ExitWhenLifetimeFileDisappearsAsync(lifetimeFile);
+        }
+    }
+
+    private async Task ExitWhenLifetimeFileDisappearsAsync(string lifetimeFile)
+    {
+        while (IsLifetimeActive(lifetimeFile))
+        {
+            await Task.Delay(500);
+        }
+
+        await Dispatcher.InvokeAsync(ExitApplication);
+    }
+
+    private static bool IsLifetimeActive(string lifetimeFile)
+    {
+        try
+        {
+            return File.Exists(lifetimeFile) &&
+                   DateTime.UtcNow - File.GetLastWriteTimeUtc(lifetimeFile) < TimeSpan.FromSeconds(15);
+        }
+        catch (IOException)
+        {
+            return true;
         }
     }
 
@@ -107,13 +134,20 @@ public partial class App : System.Windows.Application
         base.OnExit(e);
     }
 
-    private sealed record StartupOptions(string? RuntimeFile, int? ParentProcessId, int WindowOffset)
+    private sealed record StartupOptions(
+        string? RuntimeFile,
+        int? ParentProcessId,
+        int WindowOffset,
+        Uri? ExternalEndpoint,
+        string? LifetimeFile)
     {
         public static StartupOptions Parse(IReadOnlyList<string> args)
         {
             string? runtimeFile = null;
             int? parentProcessId = null;
             var windowOffset = 0;
+            Uri? externalEndpoint = null;
+            string? lifetimeFile = null;
 
             for (var index = 0; index < args.Count; index++)
             {
@@ -129,9 +163,19 @@ public partial class App : System.Windows.Application
                 {
                     windowOffset = Math.Max(0, offset);
                 }
+                else if (args[index] == "--connect" && index + 1 < args.Count &&
+                         Uri.TryCreate(args[++index], UriKind.Absolute, out var endpoint) &&
+                         endpoint.Scheme is "ws" or "wss" && endpoint.IsLoopback)
+                {
+                    externalEndpoint = endpoint;
+                }
+                else if (args[index] == "--lifetime-file" && index + 1 < args.Count)
+                {
+                    lifetimeFile = Path.GetFullPath(args[++index]);
+                }
             }
 
-            return new StartupOptions(runtimeFile, parentProcessId, windowOffset);
+            return new StartupOptions(runtimeFile, parentProcessId, windowOffset, externalEndpoint, lifetimeFile);
         }
     }
 }
