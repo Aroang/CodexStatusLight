@@ -1,0 +1,36 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodexMonitor.Core", "src\CodexMonitor.Core\CodexMonitor.Core.csproj", "{08EB78DA-D460-4C1E-86CA-C7D2FB6F5422}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodexMonitor.App", "src\CodexMonitor.App\CodexMonitor.App.csproj", "{C31EA63C-179F-487B-A9B5-A190448969EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodexMonitor.Launcher", "src\CodexMonitor.Launcher\CodexMonitor.Launcher.csproj", "{CDA1EB37-794A-4775-96E4-F0EBA3920282}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodexMonitor.SelfTest", "tests\CodexMonitor.SelfTest\CodexMonitor.SelfTest.csproj", "{F0468155-1C4A-4E42-970A-F59BE0E4F3B5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{08EB78DA-D460-4C1E-86CA-C7D2FB6F5422}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08EB78DA-D460-4C1E-86CA-C7D2FB6F5422}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08EB78DA-D460-4C1E-86CA-C7D2FB6F5422}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08EB78DA-D460-4C1E-86CA-C7D2FB6F5422}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C31EA63C-179F-487B-A9B5-A190448969EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C31EA63C-179F-487B-A9B5-A190448969EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C31EA63C-179F-487B-A9B5-A190448969EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C31EA63C-179F-487B-A9B5-A190448969EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDA1EB37-794A-4775-96E4-F0EBA3920282}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDA1EB37-794A-4775-96E4-F0EBA3920282}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDA1EB37-794A-4775-96E4-F0EBA3920282}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDA1EB37-794A-4775-96E4-F0EBA3920282}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0468155-1C4A-4E42-970A-F59BE0E4F3B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0468155-1C4A-4E42-970A-F59BE0E4F3B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0468155-1C4A-4E42-970A-F59BE0E4F3B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0468155-1C4A-4E42-970A-F59BE0E4F3B5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
