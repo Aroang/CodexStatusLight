@@ -15,7 +15,7 @@ public partial class MainWindow : Window
     private readonly System.Windows.Forms.NotifyIcon _trayIcon;
     private bool _muted;
 
-    public MainWindow(MainViewModel viewModel, AppSettingsStore settingsStore)
+    public MainWindow(MainViewModel viewModel, AppSettingsStore settingsStore, int windowOffset = 0)
     {
         InitializeComponent();
         _viewModel = viewModel;
@@ -25,17 +25,8 @@ public partial class MainWindow : Window
         var settings = settingsStore.Load();
         Topmost = settings.Topmost;
         _muted = settings.Muted;
-        if (settings.Left is { } left && settings.Top is { } top)
-        {
-            Left = left;
-            Top = top;
-            WindowStartupLocation = WindowStartupLocation.Manual;
-        }
-        else
-        {
-            WindowStartupLocation = WindowStartupLocation.Manual;
-            Loaded += (_, _) => MoveToDefaultPosition();
-        }
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Loaded += (_, _) => MoveToInitialPosition(settings, windowOffset);
 
         _trayIcon = CreateTrayIcon();
         _viewModel.AttentionRequested += OnAttentionRequested;
@@ -83,11 +74,17 @@ public partial class MainWindow : Window
         _trayIcon.ShowBalloonTip(5000);
     }
 
-    private void MoveToDefaultPosition()
+    private void MoveToInitialPosition(AppSettings settings, int windowOffset)
     {
         var workArea = SystemParameters.WorkArea;
-        Left = workArea.Right - ActualWidth - 24;
-        Top = workArea.Top + 24;
+        var baseLeft = settings.Left ?? workArea.Right - ActualWidth - 24;
+        var baseTop = settings.Top ?? workArea.Top + 24;
+        var rowsPerColumn = Math.Max(1, (int)((workArea.Height - 48) / (ActualHeight + 12)));
+        var row = windowOffset % rowsPerColumn;
+        var column = windowOffset / rowsPerColumn;
+
+        Left = Math.Max(workArea.Left, baseLeft - column * (ActualWidth + 12));
+        Top = Math.Min(workArea.Bottom - ActualHeight, baseTop + row * (ActualHeight + 12));
     }
 
     private void DragArea_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

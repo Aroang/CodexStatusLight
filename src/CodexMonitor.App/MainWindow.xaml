@@ -10,15 +10,83 @@
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         Topmost="True">
+    <Window.Resources>
+        <Style x:Key="RedLightStyle" TargetType="Ellipse">
+            <Setter Property="Opacity" Value="0.16" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsRedLightActive}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard x:Name="RedBlink">
+                            <Storyboard RepeatBehavior="Forever" Duration="0:0:1">
+                                <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="Opacity">
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0" Value="1" />
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0.5" Value="0.16" />
+                                </DoubleAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <RemoveStoryboard BeginStoryboardName="RedBlink" />
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="YellowLightStyle" TargetType="Ellipse">
+            <Setter Property="Opacity" Value="0.16" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsYellowLightActive}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard x:Name="YellowBlink">
+                            <Storyboard RepeatBehavior="Forever" Duration="0:0:2">
+                                <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="Opacity">
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0" Value="1" />
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:1" Value="0.16" />
+                                </DoubleAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <RemoveStoryboard BeginStoryboardName="YellowBlink" />
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="GreenLightStyle" TargetType="Ellipse">
+            <Setter Property="Opacity" Value="0.16" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsGreenLightActive}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard x:Name="GreenBlink">
+                            <Storyboard RepeatBehavior="Forever" Duration="0:0:1">
+                                <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="Opacity">
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0" Value="1" />
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0.5" Value="0.16" />
+                                </DoubleAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <RemoveStoryboard BeginStoryboardName="GreenBlink" />
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
     <Border Background="#F0121826" CornerRadius="22" BorderBrush="#475569" BorderThickness="1"
             Padding="11" MouseLeftButtonDown="DragArea_OnMouseLeftButtonDown">
         <Border.Effect>
             <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.35" Color="#000000" />
         </Border.Effect>
         <StackPanel VerticalAlignment="Center">
-            <Ellipse Width="42" Height="42" Fill="#FFEF4444" Opacity="{Binding RedLightOpacity}" />
-            <Ellipse Width="42" Height="42" Fill="#FFFACC15" Opacity="{Binding YellowLightOpacity}" Margin="0,8" />
-            <Ellipse Width="42" Height="42" Fill="#FF22C55E" Opacity="{Binding GreenLightOpacity}" />
+            <Grid>
+                <Ellipse Width="42" Height="42" Fill="#FFEF4444" Style="{StaticResource RedLightStyle}" />
+            </Grid>
+            <Grid Margin="0,8">
+                <Ellipse Width="42" Height="42" Fill="#FFFACC15" Style="{StaticResource YellowLightStyle}" />
+            </Grid>
+            <Grid>
+                <Ellipse Width="42" Height="42" Fill="#FF22C55E" Style="{StaticResource GreenLightStyle}" />
+            </Grid>
         </StackPanel>
     </Border>
 </Window>

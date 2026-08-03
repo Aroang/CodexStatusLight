@@ -43,4 +43,6 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $dotnet publish $launcherProject @common --no-restore
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-Write-Host "Published CodexMonitor.exe and codex-watch.exe to $output"
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'codex.cmd') -Destination (Join-Path $output 'codex.cmd') -Force
+
+Write-Host "Published CodexMonitor.exe, codex-watch.exe and codex.cmd to $output"

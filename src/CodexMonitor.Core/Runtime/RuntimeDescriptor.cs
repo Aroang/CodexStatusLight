@@ -41,16 +41,17 @@ public static class RuntimeDescriptorStore
 
     public static string FilePath => Path.Combine(DirectoryPath, "runtime.json");
 
-    public static RuntimeDescriptor? Read()
+    public static RuntimeDescriptor? Read(string? filePath = null)
     {
+        filePath ??= FilePath;
         try
         {
-            if (!File.Exists(FilePath))
+            if (!File.Exists(filePath))
             {
                 return null;
             }
 
-            return JsonSerializer.Deserialize<RuntimeDescriptor>(File.ReadAllText(FilePath), Options);
+            return JsonSerializer.Deserialize<RuntimeDescriptor>(File.ReadAllText(filePath), Options);
         }
         catch (IOException)
         {
@@ -62,20 +63,22 @@ public static class RuntimeDescriptorStore
         }
     }
 
-    public static void Write(RuntimeDescriptor descriptor)
+    public static void Write(RuntimeDescriptor descriptor, string? filePath = null)
     {
-        Directory.CreateDirectory(DirectoryPath);
-        var temporaryPath = FilePath + ".tmp";
+        filePath ??= FilePath;
+        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+        var temporaryPath = filePath + ".tmp";
         File.WriteAllText(temporaryPath, JsonSerializer.Serialize(descriptor, Options));
-        File.Move(temporaryPath, FilePath, true);
+        File.Move(temporaryPath, filePath, true);
     }
 
-    public static void DeleteIfOwnedBy(int processId)
+    public static void DeleteIfOwnedBy(int processId, string? filePath = null)
     {
-        var descriptor = Read();
-        if (descriptor?.MonitorProcessId == processId && File.Exists(FilePath))
+        filePath ??= FilePath;
+        var descriptor = Read(filePath);
+        if (descriptor?.MonitorProcessId == processId && File.Exists(filePath))
         {
-            File.Delete(FilePath);
+            File.Delete(filePath);
         }
     }
 }

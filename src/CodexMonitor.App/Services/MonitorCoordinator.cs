@@ -14,9 +14,11 @@ public sealed class MonitorCoordinator : IAsyncDisposable
     private readonly CancellationTokenSource _shutdown = new();
     private AppServerClient? _client;
     private Task? _pollTask;
+    private readonly string? _runtimeDescriptorPath;
 
-    public MonitorCoordinator()
+    public MonitorCoordinator(string? runtimeDescriptorPath = null)
     {
+        _runtimeDescriptorPath = runtimeDescriptorPath;
         _reducer.Changed += (_, snapshot) => SnapshotChanged?.Invoke(this, snapshot);
     }
 
@@ -31,7 +33,9 @@ public sealed class MonitorCoordinator : IAsyncDisposable
         _client = await ConnectWithRetryAsync(endpoint, cancellationToken).ConfigureAwait(false);
         _client.Notification += (_, notification) => _reducer.ApplyNotification(notification);
 
-        RuntimeDescriptorStore.Write(new RuntimeDescriptor(Environment.ProcessId, endpoint.ToString().TrimEnd('/'), DateTimeOffset.Now));
+        RuntimeDescriptorStore.Write(
+            new RuntimeDescriptor(Environment.ProcessId, endpoint.ToString().TrimEnd('/'), DateTimeOffset.Now),
+            _runtimeDescriptorPath);
         _pollTask = PollThreadsAsync(_shutdown.Token);
     }
 
@@ -134,7 +138,7 @@ public sealed class MonitorCoordinator : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _shutdown.Cancel();
-        RuntimeDescriptorStore.DeleteIfOwnedBy(Environment.ProcessId);
+        RuntimeDescriptorStore.DeleteIfOwnedBy(Environment.ProcessId, _runtimeDescriptorPath);
 
         if (_pollTask is not null)
         {

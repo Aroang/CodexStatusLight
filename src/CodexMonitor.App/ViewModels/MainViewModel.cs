@@ -18,18 +18,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string Detail { get => _detail; private set => Set(ref _detail, value); }
     public string Workspace { get => _workspace; private set => Set(ref _workspace, value); }
     public MonitorStatus Status => _status;
-    public double RedLightOpacity => _status is MonitorStatus.Waiting or MonitorStatus.Interrupted or MonitorStatus.Error ? 1.0 : 0.16;
-    public double YellowLightOpacity => _status == MonitorStatus.Working ? 1.0 : 0.16;
-    public double GreenLightOpacity => _status == MonitorStatus.Completed ? 1.0 : 0.16;
+    public bool IsRedLightActive => _status is MonitorStatus.Waiting or MonitorStatus.Interrupted or MonitorStatus.Error;
+    public bool IsYellowLightActive => _status == MonitorStatus.Working;
+    public bool IsGreenLightActive => _status == MonitorStatus.Completed;
 
     public void Apply(MonitorSnapshot snapshot)
     {
         var previous = _status;
         _status = snapshot.Status;
         OnPropertyChanged(nameof(Status));
-        OnPropertyChanged(nameof(RedLightOpacity));
-        OnPropertyChanged(nameof(YellowLightOpacity));
-        OnPropertyChanged(nameof(GreenLightOpacity));
+        OnPropertyChanged(nameof(IsRedLightActive));
+        OnPropertyChanged(nameof(IsYellowLightActive));
+        OnPropertyChanged(nameof(IsGreenLightActive));
         Title = snapshot.Title;
         Detail = snapshot.Detail;
 

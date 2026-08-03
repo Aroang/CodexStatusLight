@@ -27,11 +27,12 @@ internal static class Program
 
     private static async Task<RuntimeDescriptor> EnsureMonitorAsync()
     {
-        var runtime = RuntimeDescriptorStore.Read();
-        if (runtime is not null && runtime.IsAlive())
-        {
-            return runtime;
-        }
+        var sessionsDirectory = Path.Combine(RuntimeDescriptorStore.DirectoryPath, "sessions");
+        Directory.CreateDirectory(sessionsDirectory);
+        CleanupStaleSessions(sessionsDirectory);
+        var windowOffset = Directory.EnumerateFiles(sessionsDirectory, "*.json").Count();
+        var runtimePath = Path.Combine(sessionsDirectory, $"{Guid.NewGuid():N}.json");
+        File.WriteAllText(runtimePath, string.Empty);
 
         var monitorPath = FindMonitorExecutable();
         var startInfo = new ProcessStartInfo
@@ -40,14 +41,19 @@ internal static class Program
             UseShellExecute = true,
             WorkingDirectory = Environment.CurrentDirectory
         };
-        startInfo.ArgumentList.Add("--monitor-only");
+        startInfo.ArgumentList.Add("--session-runtime");
+        startInfo.ArgumentList.Add(runtimePath);
+        startInfo.ArgumentList.Add("--parent-pid");
+        startInfo.ArgumentList.Add(Environment.ProcessId.ToString());
+        startInfo.ArgumentList.Add("--window-offset");
+        startInfo.ArgumentList.Add(windowOffset.ToString());
         Process.Start(startInfo)?.Dispose();
 
         var deadline = DateTimeOffset.UtcNow.AddSeconds(12);
         while (DateTimeOffset.UtcNow < deadline)
         {
             await Task.Delay(200);
-            runtime = RuntimeDescriptorStore.Read();
+            var runtime = RuntimeDescriptorStore.Read(runtimePath);
             if (runtime is not null && runtime.IsAlive())
             {
                 return runtime;
@@ -55,6 +61,24 @@ internal static class Program
         }
 
         throw new InvalidOperationException("悬浮窗启动超时。请直接运行 CodexMonitor.exe 查看错误状态。");
+    }
+
+    private static void CleanupStaleSessions(string sessionsDirectory)
+    {
+        foreach (var file in Directory.EnumerateFiles(sessionsDirectory, "*.json"))
+        {
+            var runtime = RuntimeDescriptorStore.Read(file);
+            if (runtime is null || !runtime.IsAlive())
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (IOException)
+                {
+                }
+            }
+        }
     }
 
     private static string FindMonitorExecutable()
