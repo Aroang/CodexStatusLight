@@ -22,6 +22,7 @@ New-Item -ItemType Directory -Path $output -Force | Out-Null
 $common = @(
     '-c', 'Release',
     '-r', $Runtime,
+    "-p:CodexBuildPlatform=windows-$Runtime",
     '--self-contained', 'true',
     '-p:PublishSingleFile=true',
     '-p:IncludeNativeLibrariesForSelfExtract=true',
@@ -33,9 +34,13 @@ $common = @(
 $appProject = Join-Path $repoRoot 'src\CodexMonitor.App\CodexMonitor.App.csproj'
 $launcherProject = Join-Path $repoRoot 'src\CodexMonitor.Launcher\CodexMonitor.Launcher.csproj'
 
-& $dotnet restore $appProject -r $Runtime --configfile (Join-Path $repoRoot 'NuGet.Config')
+& $dotnet restore $appProject -r $Runtime `
+    "-p:CodexBuildPlatform=windows-$Runtime" `
+    --configfile (Join-Path $repoRoot 'NuGet.Config')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-& $dotnet restore $launcherProject -r $Runtime --configfile (Join-Path $repoRoot 'NuGet.Config')
+& $dotnet restore $launcherProject -r $Runtime `
+    "-p:CodexBuildPlatform=windows-$Runtime" `
+    --configfile (Join-Path $repoRoot 'NuGet.Config')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 & $dotnet publish $appProject @common --no-restore

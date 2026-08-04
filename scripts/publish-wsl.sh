@@ -6,6 +6,7 @@ linux_runtime="${1:-linux-x64}"
 windows_runtime="${2:-win-x64}"
 windows_publish_script="$(wslpath -w "$repo_root/scripts/publish.ps1")"
 output="$repo_root/artifacts/wsl-${linux_runtime#linux-}"
+linux_build_platform="wsl-$linux_runtime"
 
 if [[ -z "${WSL_DISTRO_NAME:-}" || ! -e /proc/sys/fs/binfmt_misc/WSLInterop ]]; then
     echo "publish-wsl.sh must run inside WSL with Windows interop enabled." >&2
@@ -47,9 +48,12 @@ fi
 
 mkdir -p "$output"
 dotnet restore "$repo_root/src/CodexMonitor.Launcher/CodexMonitor.Launcher.csproj" \
-    -r "$linux_runtime" --configfile "$repo_root/NuGet.Config"
+    -r "$linux_runtime" \
+    -p:CodexBuildPlatform="$linux_build_platform" \
+    --configfile "$repo_root/NuGet.Config"
 dotnet publish "$repo_root/src/CodexMonitor.Launcher/CodexMonitor.Launcher.csproj" \
     -c Release -r "$linux_runtime" --self-contained true \
+    -p:CodexBuildPlatform="$linux_build_platform" \
     -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
     -p:DebugType=None -p:DebugSymbols=false --no-restore -o "$output"
 

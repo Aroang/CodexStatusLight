@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup Condition="'$(CodexBuildPlatform)' != ''">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory).build/$(CodexBuildPlatform)/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory).build/$(CodexBuildPlatform)/bin/$(MSBuildProjectName)/</BaseOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)/obj/**;$(MSBuildProjectDirectory)/bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>
