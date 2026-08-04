@@ -7,3 +7,4 @@ artifacts/
 .nuget/
 *.user
 *.suo
+.build/
