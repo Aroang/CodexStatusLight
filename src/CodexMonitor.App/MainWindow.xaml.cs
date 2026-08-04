@@ -1,10 +1,10 @@
 using System.ComponentModel;
-using System.Drawing;
 using System.Windows;
 using System.Windows.Input;
 using CodexMonitor.App.Services;
 using CodexMonitor.App.ViewModels;
 using CodexMonitor.Core.Models;
+using CodexMonitor.Core.Runtime;
 
 namespace CodexMonitor.App;
 
@@ -12,14 +12,22 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly AppSettingsStore _settingsStore;
+    private readonly TerminalWindowTarget? _terminalWindow;
     private readonly System.Windows.Forms.NotifyIcon _trayIcon;
     private bool _muted;
+    private System.Windows.Point? _mouseDownPosition;
+    private bool _dragStarted;
 
-    public MainWindow(MainViewModel viewModel, AppSettingsStore settingsStore, int windowOffset = 0)
+    public MainWindow(
+        MainViewModel viewModel,
+        AppSettingsStore settingsStore,
+        TerminalWindowTarget? terminalWindow,
+        int windowOffset = 0)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _settingsStore = settingsStore;
+        _terminalWindow = terminalWindow;
         DataContext = viewModel;
 
         var settings = settingsStore.Load();
@@ -43,12 +51,13 @@ public partial class MainWindow : Window
 
         var icon = new System.Windows.Forms.NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = System.Drawing.SystemIcons.Application,
             Text = "Codex Monitor",
             Visible = true,
             ContextMenuStrip = menu
         };
         icon.DoubleClick += (_, _) => Dispatcher.Invoke(ShowAndActivate);
+        icon.BalloonTipClicked += (_, _) => Dispatcher.BeginInvoke(ActivateTerminal);
         return icon;
     }
 
@@ -91,9 +100,54 @@ public partial class MainWindow : Window
     {
         if (e.ButtonState == MouseButtonState.Pressed)
         {
-            DragMove();
+            _mouseDownPosition = e.GetPosition(this);
+            _dragStarted = false;
+            Mouse.Capture((IInputElement)sender);
+            e.Handled = true;
         }
     }
+
+    private void DragArea_OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (_mouseDownPosition is not { } start || e.LeftButton != MouseButtonState.Pressed)
+        {
+            return;
+        }
+
+        var current = e.GetPosition(this);
+        if (Math.Abs(current.X - start.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(current.Y - start.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        _dragStarted = true;
+        _mouseDownPosition = null;
+        Mouse.Capture(null);
+        DragMove();
+    }
+
+    private void DragArea_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        Mouse.Capture(null);
+        var shouldActivate = !_dragStarted && _mouseDownPosition is not null;
+        _mouseDownPosition = null;
+        _dragStarted = false;
+        e.Handled = true;
+
+        if (shouldActivate)
+        {
+            ActivateTerminal();
+        }
+    }
+
+    private void CloseButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        Close();
+    }
+
+    private void ActivateTerminal() => _terminalWindow?.TryActivate();
 
     protected override void OnClosing(CancelEventArgs e)
     {
