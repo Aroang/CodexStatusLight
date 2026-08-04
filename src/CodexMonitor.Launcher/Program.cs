@@ -22,7 +22,8 @@ internal static class Program
                 return await RunFromWslAsync(args);
             }
 
-            var runtime = await EnsureMonitorAsync();
+            var terminalWindow = TerminalWindowTarget.CaptureForeground();
+            var runtime = await EnsureMonitorAsync(terminalWindow);
             return await RunCodexAsync(runtime.Endpoint, args);
         }
         catch (Exception exception)
@@ -205,7 +206,7 @@ internal static class Program
         }
     }
 
-    private static async Task<RuntimeDescriptor> EnsureMonitorAsync()
+    private static async Task<RuntimeDescriptor> EnsureMonitorAsync(TerminalWindowTarget? terminalWindow)
     {
         var sessionsDirectory = Path.Combine(RuntimeDescriptorStore.DirectoryPath, "sessions");
         Directory.CreateDirectory(sessionsDirectory);
@@ -227,6 +228,13 @@ internal static class Program
         startInfo.ArgumentList.Add(Environment.ProcessId.ToString());
         startInfo.ArgumentList.Add("--window-offset");
         startInfo.ArgumentList.Add(windowOffset.ToString());
+        if (terminalWindow is not null)
+        {
+            startInfo.ArgumentList.Add("--terminal-window");
+            startInfo.ArgumentList.Add(terminalWindow.WindowHandle.ToString());
+            startInfo.ArgumentList.Add("--terminal-process-id");
+            startInfo.ArgumentList.Add(terminalWindow.ProcessId.ToString());
+        }
         Process.Start(startInfo)?.Dispose();
 
         var deadline = DateTimeOffset.UtcNow.AddSeconds(12);

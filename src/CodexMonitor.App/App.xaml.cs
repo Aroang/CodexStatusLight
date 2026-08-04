@@ -4,6 +4,7 @@ using System.Threading;
 using System.Windows;
 using CodexMonitor.App.Services;
 using CodexMonitor.App.ViewModels;
+using CodexMonitor.Core.Runtime;
 
 namespace CodexMonitor.App;
 
@@ -32,10 +33,15 @@ public partial class App : System.Windows.Application
 
         var settingsStore = new AppSettingsStore();
         var viewModel = new MainViewModel();
+        var terminalWindow = options.TerminalWindow;
+        if (terminalWindow is null && options.LifetimeFile is not null)
+        {
+            terminalWindow = TerminalWindowTarget.CaptureForeground();
+        }
         _coordinator = new MonitorCoordinator(options.RuntimeFile, options.ExternalEndpoint);
         _coordinator.SnapshotChanged += (_, snapshot) => Dispatcher.BeginInvoke(() => viewModel.Apply(snapshot));
 
-        _window = new MainWindow(viewModel, settingsStore, options.WindowOffset);
+        _window = new MainWindow(viewModel, settingsStore, terminalWindow, options.WindowOffset);
         MainWindow = _window;
         _window.Show();
         _ = StartCoordinatorAsync();
@@ -139,7 +145,8 @@ public partial class App : System.Windows.Application
         int? ParentProcessId,
         int WindowOffset,
         Uri? ExternalEndpoint,
-        string? LifetimeFile)
+        string? LifetimeFile,
+        TerminalWindowTarget? TerminalWindow)
     {
         public static StartupOptions Parse(IReadOnlyList<string> args)
         {
@@ -148,6 +155,8 @@ public partial class App : System.Windows.Application
             var windowOffset = 0;
             Uri? externalEndpoint = null;
             string? lifetimeFile = null;
+            long terminalWindowHandle = 0;
+            uint terminalProcessId = 0;
 
             for (var index = 0; index < args.Count; index++)
             {
@@ -173,9 +182,20 @@ public partial class App : System.Windows.Application
                 {
                     lifetimeFile = Path.GetFullPath(args[++index]);
                 }
+                else if (args[index] == "--terminal-window" && index + 1 < args.Count)
+                {
+                    long.TryParse(args[++index], out terminalWindowHandle);
+                }
+                else if (args[index] == "--terminal-process-id" && index + 1 < args.Count)
+                {
+                    uint.TryParse(args[++index], out terminalProcessId);
+                }
             }
 
-            return new StartupOptions(runtimeFile, parentProcessId, windowOffset, externalEndpoint, lifetimeFile);
+            var terminalWindow = terminalWindowHandle != 0 && terminalProcessId != 0
+                ? new TerminalWindowTarget(terminalWindowHandle, terminalProcessId)
+                : null;
+            return new StartupOptions(runtimeFile, parentProcessId, windowOffset, externalEndpoint, lifetimeFile, terminalWindow);
         }
     }
 }

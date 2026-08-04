@@ -1,6 +1,7 @@
 using System.Text.Json;
 using CodexMonitor.Core.Models;
 using CodexMonitor.Core.Protocol;
+using CodexMonitor.Core.Runtime;
 
 var tests = new (string Name, Action Run)[]
 {
@@ -14,7 +15,8 @@ var tests = new (string Name, Action Run)[]
     ("failed turn becomes error", Failed),
     ("retryable error stays working", RetryableError),
     ("unscoped terminal error becomes error", UnscopedTerminalError),
-    ("waiting outranks all other sessions", AggregatePriority)
+    ("waiting outranks all other sessions", AggregatePriority),
+    ("invalid terminal target is safely rejected", InvalidTerminalTarget)
 };
 
 var failures = 0;
@@ -117,6 +119,12 @@ static void AggregatePriority()
     reducer.ApplyNotification(Parse("""{"method":"error","params":{"threadId":"failed","turnId":"turn1","willRetry":false,"error":{"message":"failed"}}}"""));
     reducer.ApplyThread(Parse("""{"id":"waiting","status":{"type":"active","activeFlags":["waitingOnApproval"]}}"""));
     Expect(reducer.Snapshot.Status, MonitorStatus.Waiting);
+}
+
+static void InvalidTerminalTarget()
+{
+    var target = new TerminalWindowTarget(0, 1);
+    Expect(target.TryActivate(), false);
 }
 
 static JsonElement Parse(string json)
