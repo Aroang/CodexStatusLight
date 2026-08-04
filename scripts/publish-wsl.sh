@@ -17,7 +17,33 @@ if ! command -v dotnet >/dev/null 2>&1; then
     exit 1
 fi
 
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "$windows_publish_script" -Runtime "$windows_runtime"
+find_windows_powershell() {
+    if command -v powershell.exe >/dev/null 2>&1; then
+        command -v powershell.exe
+        return
+    fi
+
+    local candidate
+    for candidate in \
+        /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe \
+        "/mnt/c/Program Files/PowerShell/7/pwsh.exe"; do
+        if [[ -f "$candidate" ]]; then
+            printf '%s\n' "$candidate"
+            return
+        fi
+    done
+
+    return 1
+}
+
+if ! windows_powershell="$(find_windows_powershell)"; then
+    echo "Windows PowerShell was not found." >&2
+    echo "Enable Windows drive mounting/interop, or add powershell.exe to WSL PATH." >&2
+    exit 1
+fi
+
+"$windows_powershell" -NoLogo -NoProfile -ExecutionPolicy Bypass \
+    -File "$windows_publish_script" -Runtime "$windows_runtime"
 
 mkdir -p "$output"
 dotnet restore "$repo_root/src/CodexMonitor.Launcher/CodexMonitor.Launcher.csproj" \

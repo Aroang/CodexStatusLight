@@ -153,7 +153,8 @@ WSL 版本会在 WSL 内运行 Codex CLI 和 App Server，仅把悬浮窗放在 
 ```bash
 codex --version
 dotnet --version
-powershell.exe -NoProfile -Command '$PSVersionTable.PSVersion'
+/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe \
+  -NoProfile -Command '$PSVersionTable.PSVersion'
 ```
 
 然后在仓库根目录发布并安装：
@@ -180,6 +181,8 @@ alias codex=codex-watch
 启动器会自动找到 WSL `PATH` 中原始的 `codex` 可执行文件。也可用 Linux 路径显式设置 `CODEX_CLI_PATH`。`CodexMonitor.exe` 默认与 `codex-watch` 放在同一目录；若分开放置，`CODEX_MONITOR_APP` 在 WSL 中应设置为该 exe 的 `/mnt/...` 路径。
 
 每个 WSL 会话会建立一个只监听 `127.0.0.1` 的 App Server。WSL 启动器退出时，会结束 App Server，并通过共享生命周期文件通知 Windows 悬浮窗退出。
+
+发布脚本会优先使用 `PATH` 中的 `powershell.exe`，找不到时自动尝试 Windows 的标准安装路径。因此关闭 WSL 的 Windows PATH 注入不会影响发布；但仍需启用 WSLInterop，并挂载 Windows 系统盘到 `/mnt/c`。
 
 ## 悬浮窗和托盘操作
 
