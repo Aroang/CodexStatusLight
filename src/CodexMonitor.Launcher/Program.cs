@@ -54,9 +54,14 @@ internal static class Program
             var serverInfo = CodexCommand.CreateStartInfo(
                 new[] { "app-server", "--listen", endpoint },
                 redirectOutput: true,
-                createNoWindow: true);
+                createNoWindow: true,
+                redirectInput: true);
             appServer = Process.Start(serverInfo)
                 ?? throw new InvalidOperationException("无法在 WSL 中启动 codex app-server。");
+            // The WebSocket app server must not share the terminal's input with the
+            // interactive Codex TUI. Closing its redirected stdin gives it EOF and
+            // leaves the TUI as the only process reading keyboard events.
+            appServer.StandardInput.Close();
             _ = DrainAsync(appServer.StandardOutput);
             _ = DrainAsync(appServer.StandardError);
 

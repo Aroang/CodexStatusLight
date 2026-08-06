@@ -7,13 +7,15 @@ public static class CodexCommand
     public static ProcessStartInfo CreateStartInfo(
         IEnumerable<string> arguments,
         bool redirectOutput = false,
-        bool createNoWindow = false)
+        bool createNoWindow = false,
+        bool redirectInput = false)
     {
         var command = Resolve();
         var startInfo = new ProcessStartInfo
         {
             UseShellExecute = false,
             CreateNoWindow = createNoWindow,
+            RedirectStandardInput = redirectInput,
             RedirectStandardOutput = redirectOutput,
             RedirectStandardError = redirectOutput
         };

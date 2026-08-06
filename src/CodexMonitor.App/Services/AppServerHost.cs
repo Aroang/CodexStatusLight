@@ -21,7 +21,8 @@ public sealed class AppServerHost : IAsyncDisposable
         var startInfo = CodexCommand.CreateStartInfo(
             new[] { "app-server", "--listen", Endpoint.ToString().TrimEnd('/') },
             redirectOutput: true,
-            createNoWindow: true);
+            createNoWindow: true,
+            redirectInput: true);
 
         _process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
         _process.OutputDataReceived += (_, eventArgs) => ForwardDiagnostic(eventArgs.Data);
@@ -30,6 +31,7 @@ public sealed class AppServerHost : IAsyncDisposable
         {
             throw new InvalidOperationException("无法启动 codex app-server。请确认 Codex CLI 已加入 PATH。");
         }
+        _process.StandardInput.Close();
 
         _job = ChildProcessJob.CreateKillOnClose();
         _job.Add(_process);

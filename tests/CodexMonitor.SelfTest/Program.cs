@@ -16,7 +16,8 @@ var tests = new (string Name, Action Run)[]
     ("retryable error stays working", RetryableError),
     ("unscoped terminal error becomes error", UnscopedTerminalError),
     ("waiting outranks all other sessions", AggregatePriority),
-    ("invalid terminal target is safely rejected", InvalidTerminalTarget)
+    ("invalid terminal target is safely rejected", InvalidTerminalTarget),
+    ("background app server can detach from terminal input", RedirectedServerInput)
 };
 
 var failures = 0;
@@ -125,6 +126,28 @@ static void InvalidTerminalTarget()
 {
     var target = new TerminalWindowTarget(0, 1);
     Expect(target.TryActivate(), false);
+}
+
+static void RedirectedServerInput()
+{
+    var original = Environment.GetEnvironmentVariable("CODEX_CLI_PATH");
+    try
+    {
+        Environment.SetEnvironmentVariable("CODEX_CLI_PATH", Environment.ProcessPath);
+        var startInfo = CodexCommand.CreateStartInfo(
+            new[] { "app-server", "--listen", "ws://127.0.0.1:12345" },
+            redirectOutput: true,
+            createNoWindow: true,
+            redirectInput: true);
+
+        Expect(startInfo.RedirectStandardInput, true);
+        Expect(startInfo.RedirectStandardOutput, true);
+        Expect(startInfo.RedirectStandardError, true);
+    }
+    finally
+    {
+        Environment.SetEnvironmentVariable("CODEX_CLI_PATH", original);
+    }
 }
 
 static JsonElement Parse(string json)
